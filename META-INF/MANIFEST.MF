@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CassandraOSGi
+Bundle-SymbolicName: CassandraOSGi
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Service-Component: OSGI-INF/component.xml
+Require-Bundle: osgi.cmpn;bundle-version="4.3.0",
+ DogOntLibrary;bundle-version="2.1.1"
