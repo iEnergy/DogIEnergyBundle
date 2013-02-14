@@ -3,14 +3,13 @@
  */
 package it.proxima.jeerp.cassandra.service;
 
+import it.polito.elite.domotics.model.notification.ParametricNotification;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Dictionary;
 
 import javax.measure.Measure;
-
-import it.polito.elite.domotics.model.notification.Notification;
-import it.polito.elite.domotics.model.notification.ParametricNotification;
 
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
