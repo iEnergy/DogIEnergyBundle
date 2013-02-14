@@ -5,12 +5,15 @@ package it.proxima.jeerp.cassandra.service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Dictionary;
 
 import javax.measure.Measure;
 
 import it.polito.elite.domotics.model.notification.Notification;
 import it.polito.elite.domotics.model.notification.ParametricNotification;
 
+import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.cm.ManagedService;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
@@ -19,7 +22,7 @@ import org.osgi.service.event.EventHandler;
  * @author bonino
  * 
  */
-public class MeasureStorage implements EventHandler
+public class MeasureStorage implements EventHandler, ManagedService
 {
 	
 	/**
@@ -85,6 +88,13 @@ public class MeasureStorage implements EventHandler
 			System.err.println("[MeasureStorage]: notification from " + deviceURI+" value "+value);
 			
 		}
+		
+	}
+
+	@Override
+	public void updated(Dictionary<String, ?> properties) throws ConfigurationException
+	{
+		// TODO Auto-generated method stub
 		
 	}
 }

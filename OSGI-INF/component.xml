@@ -4,5 +4,7 @@
    <property name="event.topics" type="String" value="it/polito/elite/domotics/model/notification/*"/>
    <service>
       <provide interface="org.osgi.service.event.EventHandler"/>
+      <provide interface="org.osgi.service.cm.ManagedService"/>
    </service>
+   <property name="service.pid" type="String" value="CassandraOSGi"/>
 </scr:component>
