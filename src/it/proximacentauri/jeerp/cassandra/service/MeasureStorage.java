@@ -1,10 +1,9 @@
 /**
  * 
  */
-package it.proxima.jeerp.cassandra.service;
+package it.proximacentauri.jeerp.cassandra.service;
 
 import it.polito.elite.domotics.model.notification.ParametricNotification;
-import it.proximacentauri.jeerp.dao.SurveryDAO;
 import it.proximacentauri.jeerp.dao.cassandra.CassandraDaoImpl;
 import it.proximacentauri.jeerp.domain.Survey;
 
@@ -12,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Dictionary;
+
 import javax.measure.Measure;
 
 import me.prettyprint.hector.api.Cluster;

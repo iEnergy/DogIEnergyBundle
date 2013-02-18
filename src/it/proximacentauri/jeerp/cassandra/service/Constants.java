@@ -1,4 +1,4 @@
-package it.proxima.jeerp.cassandra.service;
+package it.proximacentauri.jeerp.cassandra.service;
 
 final class Constants {
 
