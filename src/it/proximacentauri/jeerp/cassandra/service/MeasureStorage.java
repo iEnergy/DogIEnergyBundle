@@ -3,7 +3,10 @@
  */
 package it.proximacentauri.jeerp.cassandra.service;
 
+import it.polito.elite.domotics.dog2.doglibrary.util.DogLogInstance;
+import it.polito.elite.domotics.model.notification.EventNotification;
 import it.polito.elite.domotics.model.notification.ParametricNotification;
+import it.polito.elite.stream.processing.events.GenericEvent;
 import it.proximacentauri.jeerp.dao.cassandra.CassandraDaoImpl;
 import it.proximacentauri.jeerp.domain.Survey;
 
@@ -12,11 +15,14 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Dictionary;
 
+import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
+import javax.measure.quantity.Quantity;
 
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.factory.HFactory;
 
+import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.component.annotations.Component;
@@ -36,8 +42,10 @@ public class MeasureStorage implements EventHandler, ManagedService
 	private LogService log = null;
 	private CassandraDaoImpl dao = null;
 	
-	public void activate()
+	public void activate(BundleContext ctx)
 	{
+		this.log = new DogLogInstance(ctx);
+		
 		if (this.log != null)
 			log.log(LogService.LOG_INFO, "[MeasureStorage]: Activate of cassandra");
 	}
@@ -47,19 +55,6 @@ public class MeasureStorage implements EventHandler, ManagedService
 		if (this.log != null)
 			log.log(LogService.LOG_INFO, "[MeasureStorage]: Deactivate of cassandra");
 		dao = null;
-	}
-	
-	public void bind(LogService log)
-	{
-		this.log = log;
-	}
-	
-	public void unbind(LogService log)
-	{
-		if (this.log == log)
-		{
-			this.log = null;
-		}
 	}
 	
 	@Override
@@ -81,48 +76,39 @@ public class MeasureStorage implements EventHandler, ManagedService
 			
 			// the notification measure
 			Measure<?, ?> value = null;
+			Date timestamp = new Date();
 			
-			// get all the notification methods
-			Method[] notificationMethods = receivedNotification.getClass().getDeclaredMethods();
-			
-			// extract the measure value...
-			for (Method currentMethod : notificationMethods)
+			// handle spChains notifications
+			if ((eventContent instanceof EventNotification)
+					&& (event.containsProperty(EventConstants.BUNDLE_SYMBOLICNAME) && ((String) event
+							.getProperty(EventConstants.BUNDLE_SYMBOLICNAME)).equalsIgnoreCase("SpChainsOSGi")))
 			{
-				if (currentMethod.getReturnType().isAssignableFrom(Measure.class))
-				{
-					try
-					{
-						// read the value
-						value = (Measure<?, ?>) currentMethod.invoke(receivedNotification, new Object[] {});
-						break;
-					}
-					catch (IllegalAccessException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					catch (IllegalArgumentException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					catch (InvocationTargetException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
+				// handle the spchains event
+				GenericEvent gEvt = (GenericEvent) ((EventNotification) eventContent).getEvent();
+				value = gEvt.getValueAsMeasure();
+				timestamp = gEvt.getTimestamp().getTime();
+			}
+			else
+			{
+				// handle all low-level events
+				value = this.getNotificationValue(receivedNotification);
 			}
 			
 			// debug
 			if (this.log != null)
 				log.log(LogService.LOG_DEBUG, "[MeasureStorage]: notification from " + deviceURI + " value " + value);
 			
-			Survey survey = new Survey();
-			survey.setName(deviceURI);
-			survey.setValue(value);
-			survey.setTimestamp(new Date());
-			dao.insert(survey);
+			// do nothing for null values
+			if ((value != null) && (deviceURI != null) && (!deviceURI.isEmpty()))
+			{
+				// Here "raw" and "virtual devices" must be extracted while all
+				// other spChains-generated events shall be discarded
+				Survey survey = new Survey();
+				survey.setName(deviceURI);
+				survey.setValue(value);
+				survey.setTimestamp(timestamp);
+				dao.insert(survey);
+			}
 		}
 		
 	}
@@ -151,5 +137,45 @@ public class MeasureStorage implements EventHandler, ManagedService
 		dao = new CassandraDaoImpl(cluster);
 		dao.setEnableHoursTimeline(true);
 		dao.setKeyspace(keyspace);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private DecimalMeasure<Quantity> getNotificationValue(ParametricNotification receivedNotification)
+	{
+		// the value, initially null
+		DecimalMeasure<Quantity> value = null;
+		
+		// get all the notification methods
+		Method[] notificationMethods = receivedNotification.getClass().getDeclaredMethods();
+		
+		// extract the measure value...
+		for (Method currentMethod : notificationMethods)
+		{
+			if (currentMethod.getReturnType().isAssignableFrom(Measure.class))
+			{
+				try
+				{
+					// read the value
+					value = (DecimalMeasure<Quantity>) currentMethod.invoke(receivedNotification, new Object[] {});
+					break;
+				}
+				catch (IllegalAccessException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				catch (IllegalArgumentException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				catch (InvocationTargetException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return value;
 	}
 }

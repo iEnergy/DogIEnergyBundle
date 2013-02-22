@@ -7,5 +7,4 @@
       <provide interface="org.osgi.service.cm.ManagedService"/>
    </service>
    <property name="service.pid" type="String" value="CassandraOSGi"/>
-   <reference bind="bind" cardinality="0..1" interface="org.osgi.service.log.LogService" name="LogService" policy="static" unbind="unbind"/>
 </scr:component>
