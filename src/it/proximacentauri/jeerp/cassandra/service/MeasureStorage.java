@@ -15,6 +15,7 @@ import it.proximacentauri.jeerp.dao.cassandra.CassandraDaoImpl;
 import it.proximacentauri.jeerp.domain.Survey;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Dictionary;
@@ -86,7 +87,7 @@ public class MeasureStorage implements EventHandler, ManagedService {
 			String notification = topic.substring(topic.lastIndexOf('/') + 1);
 
 			// GetQFPARAM
-			String QFParams = getNotificationQFParams(receivedNotification);
+			String qfParams = getNotificationQFParams(receivedNotification);
 
 			// handle spChains notifications
 			if ((eventContent instanceof EventNotification)
@@ -104,7 +105,7 @@ public class MeasureStorage implements EventHandler, ManagedService {
 			// debug
 			if (this.log != null) {
 				log.log(LogService.LOG_DEBUG, "[MeasureStorage]: Notification-> " + notification + " deviceURI-> " + deviceURI
-						+ " QFParams-> " + QFParams);
+						+ " QFParams-> " + qfParams);
 			}
 
 			// do nothing for null values
@@ -112,7 +113,7 @@ public class MeasureStorage implements EventHandler, ManagedService {
 				// Here "raw" and "virtual devices" must be extracted while all
 				// other spChains-generated events shall be discarded
 
-				String iuuid = SensorDescriptor.generateInnerUUID(deviceURI, notification, QFParams);
+				String iuuid = SensorDescriptor.generateInnerUUID(deviceURI, notification, qfParams);
 
 				if (sourceDefinitions.containsKey(iuuid)) {
 					SensorDescriptor desc = sourceDefinitions.get(iuuid);
@@ -213,7 +214,8 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		return value;
 	}
 
-	private String getNotificationQFParams(ParametricNotification receivedNotification) {
+	// old method, to be removed when the new will be fully tested
+	/*private String getNotificationQFParams(ParametricNotification receivedNotification) {
 
 		// get all the notification methods
 		Method[] notificationMethods = receivedNotification.getClass().getDeclaredMethods();
@@ -232,5 +234,54 @@ public class MeasureStorage implements EventHandler, ManagedService {
 			}
 		}
 		return "";
+	}*/
+	
+	private String getNotificationQFParams(ParametricNotification receivedNotification)
+	{
+		
+		// get all the notification methods
+		Field[] notificationFields = receivedNotification.getClass().getDeclaredFields();
+		
+		// prepare the buffer for parameters
+		StringBuffer qfParams = new StringBuffer();
+		
+		// the first flag
+		boolean first = true;
+		
+		// extract the parameter values...
+		for (Field currentField : notificationFields)
+		{
+			// check the current field to be different from deviceURI and from
+			// measure
+			if ((!currentField.getName().equals("deviceUri"))
+					&& (!(currentField.getType().isAssignableFrom(Measure.class)))
+					&& (currentField.getType().isAssignableFrom(String.class)))
+			{
+				try
+				{
+					//append a quote
+					if(first)
+						first = false;
+					else
+						qfParams.append(",");
+					
+					// get the value
+					qfParams.append(currentField.get(receivedNotification));
+					
+				}
+				catch (IllegalAccessException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				catch (IllegalArgumentException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+		}
+		return qfParams.toString();
 	}
 }
