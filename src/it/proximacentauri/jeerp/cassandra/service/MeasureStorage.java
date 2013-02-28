@@ -265,8 +265,14 @@ public class MeasureStorage implements EventHandler, ManagedService {
 					else
 						qfParams.append(",");
 					
+					//suppress access control
+					currentField.setAccessible(true);
+					
 					// get the value
 					qfParams.append(currentField.get(receivedNotification));
+					
+					//reset access control
+					currentField.setAccessible(false);
 					
 				}
 				catch (IllegalAccessException e)
