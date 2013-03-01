@@ -252,10 +252,12 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		for (Field currentField : notificationFields)
 		{
 			// check the current field to be different from deviceURI and from
-			// measure
-			if ((!currentField.getName().equals("deviceUri"))
-					&& (!(currentField.getType().isAssignableFrom(Measure.class)))
-					&& (currentField.getType().isAssignableFrom(String.class)))
+						// measure
+						if ((!currentField.getName().equals("deviceUri"))
+								&& (!currentField.getName().equals("notificationName"))
+								&& (!currentField.getName().equals("notificationTopic"))
+								&& (!(currentField.getType().isAssignableFrom(Measure.class)))
+								&& (currentField.getType().isAssignableFrom(String.class)))
 			{
 				try
 				{
