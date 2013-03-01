@@ -265,19 +265,18 @@ public class MeasureStorage implements EventHandler, ManagedService
 	
 	private String getNotificationQFParams(ParametricNotification receivedNotification)
 	{
-		
+
 		// get all the notification methods
 		Field[] notificationFields = receivedNotification.getClass().getDeclaredFields();
-		
+
 		// prepare the buffer for parameters
 		StringBuffer qfParams = new StringBuffer();
-		
+
 		// the first flag
 		boolean first = true;
-		
+
 		// extract the parameter values...
-		for (Field currentField : notificationFields)
-		{
+		for (Field currentField : notificationFields) {
 			// check the current field to be different from deviceURI and from
 			// measure
 			if ((!currentField.getName().equals("deviceUri")) && (!currentField.getName().equals("notificationName"))
@@ -286,35 +285,31 @@ public class MeasureStorage implements EventHandler, ManagedService
 					&& (currentField.getType().isAssignableFrom(String.class)))
 			{
 				try
-				{
+				{		
 					// append a quote
 					if (first)
 						first = false;
 					else
 						qfParams.append(",");
-					
+
 					// suppress access control
 					currentField.setAccessible(true);
-					
+
 					// get the value
 					qfParams.append(currentField.get(receivedNotification));
-					
+
 					// reset access control
 					currentField.setAccessible(false);
-					
-				}
-				catch (IllegalAccessException e)
-				{
+
+				} catch (IllegalAccessException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				catch (IllegalArgumentException e)
-				{
+				} catch (IllegalArgumentException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
-			
+
 		}
 		return qfParams.toString();
 	}
