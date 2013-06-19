@@ -1,5 +1,18 @@
-/**
+/*
  * 
+ * Copyright [2013] [claudio degioanni]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * 		http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package it.proximacentauri.jeerp.cassandra.service;
 
@@ -42,203 +55,175 @@ import org.osgi.service.log.LogService;
  * 
  */
 @Component
-public class MeasureStorage implements EventHandler, ManagedService
-{
-	
+public class MeasureStorage implements EventHandler, ManagedService {
+
 	private LogService log = null;
 	private CassandraDaoImpl dao = null;
-	
+
 	// the source definitions
 	private Hashtable<String, SensorDescriptor> sourceDefinitions = new Hashtable<String, SensorDescriptor>();
-	
-	public void activate(BundleContext ctx)
-	{
+
+	public void activate(BundleContext ctx) {
 		this.log = new DogLogInstance(ctx);
-		
+
 		if (this.log != null)
 			log.log(LogService.LOG_INFO, "[MeasureStorage]: Activate of cassandra");
 	}
-	
-	public void deactivate()
-	{
+
+	public void deactivate() {
 		if (this.log != null)
 			log.log(LogService.LOG_INFO, "[MeasureStorage]: Deactivate of cassandra");
 		dao = null;
 	}
-	
+
 	@Override
-	public void handleEvent(Event event)
-	{
+	public void handleEvent(Event event) {
 		if (this.log != null)
 			log.log(LogService.LOG_DEBUG, "[MeasureStorage]: Rcv measure " + event.getTopic());
-		
+
 		// handle Notification
 		Object eventContent = event.getProperty(EventConstants.EVENT);
-		
-		if (dao != null && eventContent instanceof ParametricNotification)
-		{
+
+		if (dao != null && eventContent instanceof ParametricNotification) {
 			// store the received notification
 			ParametricNotification receivedNotification = (ParametricNotification) eventContent;
-			
+
 			// the device uri
 			String deviceURI = receivedNotification.getDeviceUri();
-			
+
 			// the notification measure
 			Measure<?, ?> value = null;
 			Date timestamp = new Date();
-			
+
 			// get the notification name from the topic
 			String topic = event.getTopic();
 			String notification = topic.substring(topic.lastIndexOf('/') + 1);
-			
+
 			// GetQFPARAM
 			String qfParams = getNotificationQFParams(receivedNotification);
-			
+
 			// handle spChains notifications
 			if ((eventContent instanceof EventNotification)
 					&& (event.containsProperty(EventConstants.BUNDLE_SYMBOLICNAME) && ((String) event
-							.getProperty(EventConstants.BUNDLE_SYMBOLICNAME)).equalsIgnoreCase("SpChainsOSGi")))
-			{
+							.getProperty(EventConstants.BUNDLE_SYMBOLICNAME)).equalsIgnoreCase("SpChainsOSGi"))) {
 				// handle the spchains event
 				GenericEvent gEvt = (GenericEvent) ((EventNotification) eventContent).getEvent();
-				
+
 				// handle cases where the event value is null, typically due to
 				// window sizes equal or lower than the sampling period
-				if (gEvt.getValue() != null)
-				{
+				if (gEvt.getValue() != null) {
 					value = gEvt.getValueAsMeasure();
 					timestamp = gEvt.getTimestamp().getTime();
 				}
-			}
-			else
-			{
+			} else {
 				// handle all low-level events
 				value = this.getNotificationValue(receivedNotification);
 			}
-			
+
 			// debug
-			if (this.log != null)
-			{
-				log.log(LogService.LOG_DEBUG, "[MeasureStorage]: Notification-> " + notification + " deviceURI-> "
-						+ deviceURI + " QFParams-> " + qfParams);
+			if (this.log != null) {
+				log.log(LogService.LOG_DEBUG, "[MeasureStorage]: Notification-> " + notification + " deviceURI-> " + deviceURI
+						+ " QFParams-> " + qfParams);
 			}
-			
+
 			// do nothing for null values
-			if ((value != null) && (deviceURI != null) && (!deviceURI.isEmpty()))
-			{
+			if ((value != null) && (deviceURI != null) && (!deviceURI.isEmpty())) {
 				// Here "raw" and "virtual devices" must be extracted while all
 				// other spChains-generated events shall be discarded
-				
+
 				String iuuid = SensorDescriptor.generateInnerUUID(deviceURI, notification, qfParams);
-				
-				if (sourceDefinitions.containsKey(iuuid))
-				{
+
+				if (sourceDefinitions.containsKey(iuuid)) {
 					SensorDescriptor desc = sourceDefinitions.get(iuuid);
-					
+
 					Survey survey = new Survey();
 					survey.setName(desc.getUid());
 					survey.setValue(value);
 					survey.setTimestamp(timestamp);
 					dao.insert(survey);
-				}
-				else
-				{
+				} else {
 					// warning
-					if (this.log != null)
-					{
+					if (this.log != null) {
 						log.log(LogService.LOG_WARNING, "[MeasureStorage]: NOT MAPPED " + notification);
 					}
 				}
 			}
 		}
-		
+
 	}
-	
+
 	@Override
-	public void updated(Dictionary<String, ?> properties) throws ConfigurationException
-	{
-		
+	public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+
 		String host = (String) properties.get(Constants.HOST);
 		String keyspace = (String) properties.get(Constants.KEYSPACE);
-		File sourceMappingFile = new File(System.getProperty("configFolder") + "/"
-				+ (String) properties.get(Constants.MAPPING_FILE));
-		
+		File sourceMappingFile = new File(System.getProperty("configFolder") + "/" + (String) properties.get(Constants.MAPPING_FILE));
+
 		// Checking configuration
-		if (host == null)
-		{
+		if (host == null) {
 			if (this.log != null)
 				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.HOST);
 			return;
 		}
-		
-		if (keyspace == null)
-		{
+
+		if (keyspace == null) {
 			if (this.log != null)
 				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.KEYSPACE);
 			return;
 		}
-		
-		if (!sourceMappingFile.isFile())
-		{
+
+		if (!sourceMappingFile.isFile()) {
 			if (this.log != null)
 				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.MAPPING_FILE);
 			return;
 		}
-		
+
 		// load mapping file
 		initSources(sourceMappingFile);
-		
+
 		final Cluster cluster = HFactory.getOrCreateCluster("cluster", host);
-		
+
 		dao = new CassandraDaoImpl(cluster);
 		dao.setEnableHoursTimeline(true);
 		dao.setKeyspace(keyspace.trim());
 	}
-	
+
 	/**
 	 * 
 	 * @param sourceMappingFile
 	 */
-	private void initSources(File sourceMappingFile)
-	{
+	private void initSources(File sourceMappingFile) {
 		// parse the mapping file
 		SensorCollectionType mappingSpec = SourceToDeviceMappingSpecification.parseXMLSpecification(sourceMappingFile);
-		
+
 		// generate and store sensor descriptors
-		for (SensorData sData : mappingSpec.getSensor())
-		{
+		for (SensorData sData : mappingSpec.getSensor()) {
 			// create a sensor descriptor object
-			SensorDescriptor desc = new SensorDescriptor(sData.getSensorURI(), sData.getSensorQFunctionality(),
-					sData.getSensorQFParams(), sData.getUid());
-			
+			SensorDescriptor desc = new SensorDescriptor(sData.getSensorURI(), sData.getSensorQFunctionality(), sData.getSensorQFParams(),
+					sData.getUid());
+
 			// store the sensor descriptor
 			this.sourceDefinitions.put(desc.getIUUID(), desc);
 		}
-		
+
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	private DecimalMeasure<Quantity> getNotificationValue(ParametricNotification receivedNotification)
-	{
+	private DecimalMeasure<Quantity> getNotificationValue(ParametricNotification receivedNotification) {
 		// the value, initially null
 		DecimalMeasure<Quantity> value = null;
-		
+
 		// get all the notification methods
 		Method[] notificationMethods = receivedNotification.getClass().getDeclaredMethods();
-		
+
 		// extract the measure value...
-		for (Method currentMethod : notificationMethods)
-		{
-			if (currentMethod.getReturnType().isAssignableFrom(Measure.class))
-			{
-				try
-				{
+		for (Method currentMethod : notificationMethods) {
+			if (currentMethod.getReturnType().isAssignableFrom(Measure.class)) {
+				try {
 					// read the value
 					value = (DecimalMeasure<Quantity>) currentMethod.invoke(receivedNotification, new Object[] {});
 					break;
-				}
-				catch (Exception e)
-				{
+				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -246,7 +231,7 @@ public class MeasureStorage implements EventHandler, ManagedService
 		}
 		return value;
 	}
-	
+
 	// old method, to be removed when the new will be fully tested
 	/*
 	 * private String getNotificationQFParams(ParametricNotification
@@ -262,9 +247,8 @@ public class MeasureStorage implements EventHandler, ManagedService
 	 * (Exception e) { // TODO Auto-generated catch block e.printStackTrace(); }
 	 * } } return ""; }
 	 */
-	
-	private String getNotificationQFParams(ParametricNotification receivedNotification)
-	{
+
+	private String getNotificationQFParams(ParametricNotification receivedNotification) {
 
 		// get all the notification methods
 		Field[] notificationFields = receivedNotification.getClass().getDeclaredFields();
@@ -280,12 +264,9 @@ public class MeasureStorage implements EventHandler, ManagedService
 			// check the current field to be different from deviceURI and from
 			// measure
 			if ((!currentField.getName().equals("deviceUri")) && (!currentField.getName().equals("notificationName"))
-					&& (!currentField.getName().equals("notificationTopic"))
-					&& (!(currentField.getType().isAssignableFrom(Measure.class)))
-					&& (currentField.getType().isAssignableFrom(String.class)))
-			{
-				try
-				{		
+					&& (!currentField.getName().equals("notificationTopic")) && (!(currentField.getType().isAssignableFrom(Measure.class)))
+					&& (currentField.getType().isAssignableFrom(String.class))) {
+				try {
 					// append a quote
 					if (first)
 						first = false;
