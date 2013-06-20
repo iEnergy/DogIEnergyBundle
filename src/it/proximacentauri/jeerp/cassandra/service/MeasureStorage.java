@@ -232,22 +232,6 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		return value;
 	}
 
-	// old method, to be removed when the new will be fully tested
-	/*
-	 * private String getNotificationQFParams(ParametricNotification
-	 * receivedNotification) {
-	 * 
-	 * // get all the notification methods Method[] notificationMethods =
-	 * receivedNotification.getClass().getDeclaredMethods();
-	 * 
-	 * // extract the measure value... for (Method currentMethod :
-	 * notificationMethods) { // TODO to check this // line valid only // for
-	 * threephase if (currentMethod.getName().equals("getPhaseID")) { try {
-	 * return (String) currentMethod.invoke(receivedNotification); } catch
-	 * (Exception e) { // TODO Auto-generated catch block e.printStackTrace(); }
-	 * } } return ""; }
-	 */
-
 	private String getNotificationQFParams(ParametricNotification receivedNotification) {
 
 		// get all the notification methods
