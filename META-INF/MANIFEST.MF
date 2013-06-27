@@ -17,7 +17,6 @@ Bundle-ClassPath: .,
  lib/hector-core-1.0-5.jar,
  lib/httpclient-4.0.1.jar,
  lib/httpcore-4.0.1.jar,
- lib/it.proxima.jeerp-1.1.0.jar,
  lib/jscience-4.3.1.jar,
  lib/libthrift-0.6.1.jar,
  lib/log4j-over-slf4j-1.7.2.jar,
@@ -25,6 +24,7 @@ Bundle-ClassPath: .,
  lib/logback-core-1.0.9.jar,
  lib/slf4j-api-1.7.2.jar,
  lib/uuid-3.2.0.jar,
- lib/spchains-addon.jar
+ lib/spchains-addon.jar,
+ lib/it.proxima.jeerp-1.4.0.jar
 Import-Package: it.polito.elite.stream.processing.events;resolution:=optional,
  org.osgi.framework
