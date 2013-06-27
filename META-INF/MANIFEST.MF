@@ -26,5 +26,4 @@ Bundle-ClassPath: .,
  lib/uuid-3.2.0.jar,
  lib/spchains-addon.jar,
  lib/it.proxima.jeerp-1.4.0.jar
-Import-Package: it.polito.elite.stream.processing.events;resolution:=optional,
- org.osgi.framework
+Import-Package: org.osgi.framework
