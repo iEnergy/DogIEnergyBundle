@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.proximacentauri.jeerp.cassandra.service;
+package it.proximacentauri.ienergy.cassandra.service;
 
 import it.polito.elite.domotics.dog2.doglibrary.util.DogLogInstance;
 import it.polito.elite.domotics.model.notification.EventNotification;
@@ -24,8 +24,8 @@ import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.Senso
 import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.SensorData;
 import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.SourceToDeviceMappingSpecification;
 import it.polito.elite.stream.processing.events.GenericEvent;
-import it.proximacentauri.jeerp.dao.cassandra.CassandraDaoImpl;
-import it.proximacentauri.jeerp.domain.Survey;
+import it.proximacentauri.ienergy.dao.cassandra.CassandraDaoImpl;
+import it.proximacentauri.ienergy.domain.Survey;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -50,10 +50,6 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.log.LogService;
 
-/**
- * @author bonino
- * 
- */
 @Component
 public class MeasureStorage implements EventHandler, ManagedService {
 

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.proximacentauri.jeerp.cassandra.service;
+package it.proximacentauri.ienergy.cassandra.service;
 
 final class Constants {
 

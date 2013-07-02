@@ -25,5 +25,5 @@ Bundle-ClassPath: .,
  lib/slf4j-api-1.7.2.jar,
  lib/uuid-3.2.0.jar,
  lib/spchains-addon.jar,
- lib/it.proxima.jeerp-1.4.0.jar
+ lib/it.proximacentauri.ienergy-1.4.0.jar
 Import-Package: org.osgi.framework
