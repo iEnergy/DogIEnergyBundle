@@ -137,11 +137,6 @@ public class MeasureStorage implements EventHandler, ManagedService {
 					survey.setValue(value);
 					survey.setTimestamp(timestamp);
 					dao.insert(survey);
-				} else {
-					// warning
-					if (this.log != null) {
-						log.log(LogService.LOG_WARNING, "[MeasureStorage]: NOT MAPPED " + notification);
-					}
 				}
 			}
 		}
