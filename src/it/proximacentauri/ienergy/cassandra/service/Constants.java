@@ -21,4 +21,9 @@ final class Constants {
 	final static String HOST = "dao.cassandra.host";
 	final static String KEYSPACE = "dao.cassandra.keyspace";
 	final static String MAPPING_FILE = "dao.cassandra.source.mapping";
+
+	final static String DB_URL = "db.url";
+	final static String DB_DRIVER = "db.driver";
+	final static String DB_USERNAME = "db.username";
+	final static String DB_PASSWORD = "db.password";
 }

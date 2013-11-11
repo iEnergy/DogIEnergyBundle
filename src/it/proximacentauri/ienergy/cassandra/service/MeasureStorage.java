@@ -24,12 +24,14 @@ import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.Senso
 import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.SensorData;
 import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.SourceToDeviceMappingSpecification;
 import it.polito.elite.stream.processing.events.GenericEvent;
-import it.proximacentauri.ienergy.dao.cassandra.CassandraDaoImpl;
-import it.proximacentauri.ienergy.domain.Survey;
+import it.proximacentauri.ienergy.osgi.dao.SurveryDaoImpl;
+import it.proximacentauri.ienergy.osgi.dao.SurveyDao;
+import it.proximacentauri.ienergy.osgi.domain.Survey;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -37,9 +39,6 @@ import java.util.Hashtable;
 import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
 import javax.measure.quantity.Quantity;
-
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.factory.HFactory;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.ConfigurationException;
@@ -54,7 +53,7 @@ import org.osgi.service.log.LogService;
 public class MeasureStorage implements EventHandler, ManagedService {
 
 	private LogService log = null;
-	private CassandraDaoImpl dao = null;
+	private SurveyDao dao = null;
 
 	// the source definitions
 	private Hashtable<String, SensorDescriptor> sourceDefinitions = new Hashtable<String, SensorDescriptor>();
@@ -136,7 +135,12 @@ public class MeasureStorage implements EventHandler, ManagedService {
 					survey.setName(desc.getUid());
 					survey.setValue(value);
 					survey.setTimestamp(timestamp);
-					dao.insert(survey);
+					try {
+						dao.insert(survey);
+					} catch (Exception e) {
+						if (this.log != null)
+							log.log(LogService.LOG_ERROR, "Error " + Constants.HOST);
+					}
 				}
 			}
 		}
@@ -172,11 +176,20 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		// load mapping file
 		initSources(sourceMappingFile);
 
-		final Cluster cluster = HFactory.getOrCreateCluster("cluster", host);
+		// final Cluster cluster = HFactory.getOrCreateCluster("cluster", host);
 
-		dao = new CassandraDaoImpl(cluster);
-		dao.setEnableHoursTimeline(true);
-		dao.setKeyspace(keyspace.trim());
+		String dbDriver = (String) properties.get(Constants.DB_DRIVER);
+		String dbUrl = (String) properties.get(Constants.DB_URL);
+		String dbUsername = (String) properties.get(Constants.DB_USERNAME);
+		String dbPassword = (String) properties.get(Constants.DB_PASSWORD);
+
+		try {
+			dao = new SurveryDaoImpl(dbDriver, dbUrl, dbUsername, dbPassword);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	/**
