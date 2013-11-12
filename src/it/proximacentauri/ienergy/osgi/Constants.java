@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.proximacentauri.ienergy.cassandra.service;
+package it.proximacentauri.ienergy.osgi;
 
 final class Constants {
 
-	final static String HOST = "dao.cassandra.host";
-	final static String KEYSPACE = "dao.cassandra.keyspace";
-	final static String MAPPING_FILE = "dao.cassandra.source.mapping";
+	final static String MAPPING_FILE = "source.mapping";
 
 	final static String DB_URL = "db.url";
 	final static String DB_DRIVER = "db.driver";
 	final static String DB_USERNAME = "db.username";
 	final static String DB_PASSWORD = "db.password";
+	final static String DB_MAX_ACTIVE = "db.maxActive";
+
 }

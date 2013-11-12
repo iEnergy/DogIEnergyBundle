@@ -30,6 +30,7 @@ public class SurveryDaoImpl implements SurveyDao {
 	private String url = "jdbc:postgresql://10.10.10.196:5432/ienergy";
 	private String username = "ienergy";
 	private String password = "ienergy";
+	private int maxActive = 2;
 
 	private static final String DRAIN_REGISTRY = "SELECT id, drain_raw FROM drain_registry";
 	private static final String DRAIN_INSERT = "INSERT INTO drain_registry(drain_raw) VALUES (?)";
@@ -39,12 +40,13 @@ public class SurveryDaoImpl implements SurveyDao {
 
 	private Map<String, Long> drainIdMap = null;
 
-	public SurveryDaoImpl(String driver, String url, String user, String password) throws Exception {
+	public SurveryDaoImpl(String driver, String url, String user, String password, int maxActive) throws Exception {
 		// save the connection parameter
 		this.driver = driver;
 		this.url = url;
 		this.username = user;
 		this.password = password;
+		this.maxActive = maxActive;
 
 		// hash map for drain id
 		drainIdMap = Collections.synchronizedMap(new HashMap<String, Long>());
@@ -63,7 +65,7 @@ public class SurveryDaoImpl implements SurveyDao {
 		// pool of connections object.
 		//
 		GenericObjectPool<DataSource> connectionPool = new GenericObjectPool<DataSource>();
-		connectionPool.setMaxActive(10);
+		connectionPool.setMaxActive(maxActive);
 
 		//
 		// Creates a connection factory object which will be use by

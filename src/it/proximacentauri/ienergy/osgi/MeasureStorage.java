@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.proximacentauri.ienergy.cassandra.service;
+package it.proximacentauri.ienergy.osgi;
 
 import it.polito.elite.domotics.dog2.doglibrary.util.DogLogInstance;
 import it.polito.elite.domotics.model.notification.EventNotification;
@@ -31,7 +31,6 @@ import it.proximacentauri.ienergy.osgi.domain.Survey;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -62,12 +61,12 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		this.log = new DogLogInstance(ctx);
 
 		if (this.log != null)
-			log.log(LogService.LOG_INFO, "[MeasureStorage]: Activate of cassandra");
+			log.log(LogService.LOG_INFO, "[MeasureStorage]: Activate of db LAYER");
 	}
 
 	public void deactivate() {
 		if (this.log != null)
-			log.log(LogService.LOG_INFO, "[MeasureStorage]: Deactivate of cassandra");
+			log.log(LogService.LOG_INFO, "[MeasureStorage]: Deactivate of LAYER");
 		dao = null;
 	}
 
@@ -139,7 +138,7 @@ public class MeasureStorage implements EventHandler, ManagedService {
 						dao.insert(survey);
 					} catch (Exception e) {
 						if (this.log != null)
-							log.log(LogService.LOG_ERROR, "Error " + Constants.HOST);
+							log.log(LogService.LOG_ERROR, "Error " + e.getMessage());
 					}
 				}
 			}
@@ -150,20 +149,38 @@ public class MeasureStorage implements EventHandler, ManagedService {
 	@Override
 	public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
 
-		String host = (String) properties.get(Constants.HOST);
-		String keyspace = (String) properties.get(Constants.KEYSPACE);
+		if (this.log != null)
+			log.log(LogService.LOG_INFO, "[MeasureStorage]: load configuration");
+
+		String dbDriver = (String) properties.get(Constants.DB_DRIVER);
+		String dbUrl = (String) properties.get(Constants.DB_URL);
+		String dbUsername = (String) properties.get(Constants.DB_USERNAME);
+		String dbPassword = (String) properties.get(Constants.DB_PASSWORD);
+		int maxActive = Integer.parseInt((String) properties.get(Constants.DB_MAX_ACTIVE));
 		File sourceMappingFile = new File(System.getProperty("configFolder") + "/" + (String) properties.get(Constants.MAPPING_FILE));
 
 		// Checking configuration
-		if (host == null) {
+		if (dbDriver == null) {
 			if (this.log != null)
-				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.HOST);
+				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.DB_DRIVER);
 			return;
 		}
 
-		if (keyspace == null) {
+		if (dbUrl == null) {
 			if (this.log != null)
-				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.KEYSPACE);
+				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.DB_URL);
+			return;
+		}
+
+		if (dbUsername == null) {
+			if (this.log != null)
+				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.DB_USERNAME);
+			return;
+		}
+
+		if (dbPassword == null) {
+			if (this.log != null)
+				log.log(LogService.LOG_ERROR, "Missing configuration param " + Constants.DB_PASSWORD);
 			return;
 		}
 
@@ -176,18 +193,12 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		// load mapping file
 		initSources(sourceMappingFile);
 
-		// final Cluster cluster = HFactory.getOrCreateCluster("cluster", host);
-
-		String dbDriver = (String) properties.get(Constants.DB_DRIVER);
-		String dbUrl = (String) properties.get(Constants.DB_URL);
-		String dbUsername = (String) properties.get(Constants.DB_USERNAME);
-		String dbPassword = (String) properties.get(Constants.DB_PASSWORD);
-
 		try {
-			dao = new SurveryDaoImpl(dbDriver, dbUrl, dbUsername, dbPassword);
+			dao = new SurveryDaoImpl(dbDriver, dbUrl, dbUsername, dbPassword, maxActive);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if (this.log != null)
+				log.log(LogService.LOG_ERROR, "Error creating dao " + e.getMessage());
+			return;
 		}
 
 	}
