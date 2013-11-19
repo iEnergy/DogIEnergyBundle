@@ -34,7 +34,8 @@ public class SurveryDaoImpl implements SurveyDao {
 
 	private static final String DRAIN_REGISTRY = "SELECT id, drain_raw FROM drain_registry";
 	private static final String DRAIN_INSERT = "INSERT INTO drain_registry(drain_raw) VALUES (?)";
-	private static final String MEASURE_RT = "INSERT INTO measure_rt(id_drain, value, \"time\")VALUES (?, ?, ?)";
+	private static final String INSERT_MEASURE_RT = "INSERT INTO measure_rt(id_drain, value, \"time\")VALUES (?, ?, ?)";
+	private static final String UPDATE_MEASURE_RT = "UPDATE measure_rt SET \"value\" = ?, \"time\" = ? WHERE id_drain = ?";
 
 	private DataSource dataSource = null;
 
@@ -94,16 +95,25 @@ public class SurveryDaoImpl implements SurveyDao {
 			log.debug("insert drain to register {}", obj.getName());
 			conn = dataSource.getConnection();
 
-			// insert drain into db
-			final PreparedStatement pStatement = conn.prepareStatement(MEASURE_RT);
-			pStatement.setLong(1, id);
-			pStatement.setBigDecimal(2, (BigDecimal) obj.getValue().getValue());
-			// pStatement.setDate(3, new
-			// java.sql.Date(obj.getTimestamp().getTime()));
-			pStatement.setTimestamp(3, new java.sql.Timestamp(obj.getTimestamp().getTime()));
+			// try to update the measure
+			PreparedStatement pStatement = conn.prepareStatement(UPDATE_MEASURE_RT);
+			pStatement.setBigDecimal(1, (BigDecimal) obj.getValue().getValue());
+			pStatement.setTimestamp(2, new java.sql.Timestamp(obj.getTimestamp().getTime()));
+			pStatement.setLong(3, id);
 
-			pStatement.executeUpdate();
+			int count = pStatement.executeUpdate();
 			pStatement.close();
+
+			if (count == 0) {
+				// failed the update try with insert
+				pStatement = conn.prepareStatement(INSERT_MEASURE_RT);
+				pStatement.setLong(1, id);
+				pStatement.setBigDecimal(2, (BigDecimal) obj.getValue().getValue());
+				pStatement.setTimestamp(3, new java.sql.Timestamp(obj.getTimestamp().getTime()));
+
+				pStatement.executeUpdate();
+				pStatement.close();
+			}
 
 		} catch (SQLException e) {
 			// log error and rethrow ex
