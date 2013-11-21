@@ -19,6 +19,7 @@ package it.proximacentauri.ienergy.osgi;
 final class Constants {
 
 	final static String MAPPING_FILE = "source.mapping";
+	final static String REMOVE_PATTERN = "source.removePattern";
 
 	final static String DB_URL = "db.url";
 	final static String DB_DRIVER = "db.driver";

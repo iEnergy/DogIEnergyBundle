@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.measure.unit.Unit;
 import javax.sql.DataSource;
 
 import org.apache.commons.dbcp.ConnectionFactory;
@@ -31,23 +32,25 @@ public class SurveryDaoImpl implements SurveyDao {
 	private String username = "ienergy";
 	private String password = "ienergy";
 	private int maxActive = 2;
+	private String removePattern = null;
 
-	private static final String DRAIN_REGISTRY = "SELECT id, drain_raw FROM drain_registry";
-	private static final String DRAIN_INSERT = "INSERT INTO drain_registry(drain_raw) VALUES (?)";
-	private static final String INSERT_MEASURE_RT = "INSERT INTO measure_rt(id_drain, value, \"time\")VALUES (?, ?, ?)";
-	private static final String UPDATE_MEASURE_RT = "UPDATE measure_rt SET \"value\" = ?, \"time\" = ? WHERE id_drain = ?";
+	private static final String DRAIN_REGISTRY = "SELECT id, drain FROM drain_descriptor";
+	private static final String DRAIN_INSERT = "INSERT INTO drain_descriptor(drain, unit) VALUES (?, ?)";
+	private static final String INSERT_MEASURE_RT = "INSERT INTO measure_rt(drain_id, value, \"time\")VALUES (?, ?, ?)";
+	private static final String UPDATE_MEASURE_RT = "UPDATE measure_rt SET \"value\" = ?, \"time\" = ? WHERE drain_id = ?";
 
 	private DataSource dataSource = null;
 
 	private Map<String, Long> drainIdMap = null;
 
-	public SurveryDaoImpl(String driver, String url, String user, String password, int maxActive) throws Exception {
+	public SurveryDaoImpl(String driver, String url, String user, String password, int maxActive, String removePattern) throws Exception {
 		// save the connection parameter
 		this.driver = driver;
 		this.url = url;
 		this.username = user;
 		this.password = password;
 		this.maxActive = maxActive;
+		this.removePattern = removePattern;
 
 		// hash map for drain id
 		drainIdMap = Collections.synchronizedMap(new HashMap<String, Long>());
@@ -87,6 +90,15 @@ public class SurveryDaoImpl implements SurveyDao {
 	@Override
 	public void insert(Survey obj) throws SQLException {
 		log.info("insert new measure {}", obj);
+		// drain name convertion
+		String drainName = obj.getName();
+
+		if (removePattern != null) {
+			drainName = drainName.replaceAll(removePattern, "").toUpperCase();
+			log.info("drain name convertion from " + obj.getName() + " to " + drainName);
+			obj.setName(drainName);
+		}
+
 		// try to load the drain registry id
 		long id = getDrainId(obj);
 
@@ -158,7 +170,7 @@ public class SurveryDaoImpl implements SurveyDao {
 		}
 
 		// id not found insert the drain in the database
-		insertDrainRegistry(drainName);
+		insertDrainRegistry(drainName, obj.getValue().getUnit());
 
 		return drainIdMap.get(drainName);
 	}
@@ -181,7 +193,7 @@ public class SurveryDaoImpl implements SurveyDao {
 
 				while (resultSet.next()) {
 					// load data
-					final String drainString = resultSet.getString("drain_raw");
+					final String drainString = resultSet.getString("drain");
 					final long drainId = resultSet.getLong("id");
 
 					log.debug("found drain {} with id {}", drainString, drainId);
@@ -210,7 +222,7 @@ public class SurveryDaoImpl implements SurveyDao {
 	 *            the drain name
 	 * @throws SQLException
 	 */
-	synchronized private void insertDrainRegistry(String drainName) throws SQLException {
+	synchronized private void insertDrainRegistry(String drainName, Unit<?> unit) throws SQLException {
 		synchronized (this) {
 			Connection conn = null;
 			try {
@@ -220,6 +232,8 @@ public class SurveryDaoImpl implements SurveyDao {
 				// insert drain into db
 				final PreparedStatement pStatement = conn.prepareStatement(DRAIN_INSERT, Statement.RETURN_GENERATED_KEYS);
 				pStatement.setString(1, drainName);
+				pStatement.setString(2, unit.toString());
+
 				pStatement.executeUpdate();
 
 				// get the generated id
