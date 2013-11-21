@@ -32,11 +32,6 @@ public class Survey {
 	static {
 		Unit.ONE.alternate("ppm");
 		Unit.ONE.alternate("PPM");
-//		Unit.ONE.alternate("Var");
-//		Unit.ONE.alternate("VAr");
-//		Unit.ONE.alternate("VAR");
-//		Unit.ONE.alternate("VA");
-		//Unit.ONE.alternate("1");
 	}
 
 	public Survey(String name, Date timestamp, String value) {

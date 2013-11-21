@@ -156,6 +156,8 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		String dbUrl = (String) properties.get(Constants.DB_URL);
 		String dbUsername = (String) properties.get(Constants.DB_USERNAME);
 		String dbPassword = (String) properties.get(Constants.DB_PASSWORD);
+		String removePattern = (String) properties.get(Constants.REMOVE_PATTERN);
+
 		int maxActive = Integer.parseInt((String) properties.get(Constants.DB_MAX_ACTIVE));
 		File sourceMappingFile = new File(System.getProperty("configFolder") + "/" + (String) properties.get(Constants.MAPPING_FILE));
 
@@ -194,7 +196,7 @@ public class MeasureStorage implements EventHandler, ManagedService {
 		initSources(sourceMappingFile);
 
 		try {
-			dao = new SurveryDaoImpl(dbDriver, dbUrl, dbUsername, dbPassword, maxActive);
+			dao = new SurveryDaoImpl(dbDriver, dbUrl, dbUsername, dbPassword, maxActive, removePattern);
 		} catch (Exception e) {
 			if (this.log != null)
 				log.log(LogService.LOG_ERROR, "Error creating dao " + e.getMessage());
