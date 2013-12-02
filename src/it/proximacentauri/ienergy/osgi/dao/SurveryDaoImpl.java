@@ -34,10 +34,10 @@ public class SurveryDaoImpl implements SurveyDao {
 	private int maxActive = 2;
 	private String removePattern = null;
 
-	private static final String DRAIN_REGISTRY = "SELECT id, drain FROM drain_descriptor";
-	private static final String DRAIN_INSERT = "INSERT INTO drain_descriptor(drain, unit) VALUES (?, ?)";
-	private static final String INSERT_MEASURE_RT = "INSERT INTO measure_rt(drain_id, value, \"time\")VALUES (?, ?, ?)";
-	private static final String UPDATE_MEASURE_RT = "UPDATE measure_rt SET \"value\" = ?, \"time\" = ? WHERE drain_id = ?";
+	private static final String DRAIN_REGISTRY = "SELECT id, drain FROM da_drain_descriptor";
+	private static final String DRAIN_INSERT = "INSERT INTO da_drain_descriptor(drain, unit) VALUES (?, ?)";
+	private static final String INSERT_MEASURE_RT = "INSERT INTO da_measure_rt(drain_id, value, \"time\")VALUES (?, ?, ?)";
+	private static final String UPDATE_MEASURE_RT = "UPDATE da_measure_rt SET \"value\" = ?, \"time\" = ? WHERE drain_id = ?";
 
 	private DataSource dataSource = null;
 
