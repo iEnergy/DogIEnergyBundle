@@ -16,10 +16,10 @@
  */
 package it.proximacentauri.ienergy.osgi;
 
-import it.polito.elite.domotics.dog2.doglibrary.util.DogLogInstance;
-import it.polito.elite.domotics.model.notification.EventNotification;
-import it.polito.elite.domotics.model.notification.ParametricNotification;
-import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.SensorDescriptor;
+import it.polito.elite.dog.core.library.model.notification.EventNotification;
+import it.polito.elite.dog.core.library.model.notification.ParametricNotification;
+import it.polito.elite.dog.core.library.stream.source.mapping.SensorDescriptor;
+import it.polito.elite.dog.core.library.util.LogHelper;
 import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.SensorCollectionType;
 import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.SensorData;
 import it.polito.elite.stream.processing.addon.event.source.dog.xmlrpc.xml.SourceToDeviceMappingSpecification;
@@ -42,23 +42,21 @@ import javax.measure.quantity.Quantity;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
-import org.osgi.service.component.annotations.Component;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.log.LogService;
 
-@Component
 public class MeasureStorage implements EventHandler, ManagedService {
 
-	private LogService log = null;
+	private LogHelper log = null;
 	private SurveyDao dao = null;
 
 	// the source definitions
 	private Hashtable<String, SensorDescriptor> sourceDefinitions = new Hashtable<String, SensorDescriptor>();
 
 	public void activate(BundleContext ctx) {
-		this.log = new DogLogInstance(ctx);
+		this.log = new LogHelper(ctx);
 
 		if (this.log != null)
 			log.log(LogService.LOG_INFO, "[MeasureStorage]: Activate of db LAYER");
@@ -148,6 +146,9 @@ public class MeasureStorage implements EventHandler, ManagedService {
 
 	@Override
 	public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+
+		if (properties == null)
+			return;
 
 		if (this.log != null)
 			log.log(LogService.LOG_INFO, "[MeasureStorage]: load configuration");
